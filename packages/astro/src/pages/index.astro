@@ -1,0 +1,9 @@
+---
+import Layout from "../layouts/Layout.astro";
+import TinybaseTable from "../react/components/tinybase-table.tsx";
+---
+
+<Layout>
+	<h1>Astro</h1>
+	<TinybaseTable name="users" client:only="react" />
+</Layout>

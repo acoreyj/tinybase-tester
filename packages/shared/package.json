@@ -1,0 +1,34 @@
+{
+	"name": "@tinybase-tester/shared",
+	"packageManager": "pnpm@10.14.0",
+	"version": "1.0.0",
+	"description": "Genie Workspace Shared",
+	"private": true,
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"dependencies": {
+		"@cloudflare/workers-types": "^4.20250415.0",
+		"@openauthjs/openauth": "^0.4.3",
+		"@simplewebauthn/browser": "^13.1.0",
+		"@simplewebauthn/server": "^13.1.1",
+		"aws4fetch": "^1.0.20",
+		"better-auth": "^1.3.4",
+		"drizzle-orm": "^0.44.4",
+		"mimetext": "^3.0.27",
+		"reconnecting-websocket": "^4.4.0",
+		"tinybase": "link:/home/corey/workspace/tinybase/dist",
+		"@tinybase-tester/shared": "workspace:*"
+	},
+	"devDependencies": {
+		"@types/node": "^22.14.1",
+		"drizzle-kit": "^0.31.4",
+		"wrangler": "^4.15.2"
+	},
+	"scripts": {
+		"db:generate": "drizzle-kit generate",
+		"db:migrate:local": "wrangler d1 migrations apply genie-better-auth-db --local --persist-to ../../.wrangler",
+		"db:migrate:prod": "wrangler d1 migrations apply genie-better-auth-db --remote",
+		"db:migrate:preview": "wrangler d1 migrations apply --env staging genie-better-auth-db-staging --remote"
+	}
+}

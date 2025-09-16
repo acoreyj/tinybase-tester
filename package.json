@@ -1,0 +1,5 @@
+{
+	"devDependencies": {
+		"biome": "^0.3.3"
+	}
+}

@@ -1,5 +1,5 @@
 {
-	"name": "tinybase-server",
+	"name": "@tinybase-tester/tinybase-server",
 	"version": "0.0.0",
 	"private": true,
 	"scripts": {

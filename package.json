@@ -1,4 +1,11 @@
 {
+	"name": "tinybase-tester",
+	"scripts": {
+		"dev": "pnpm --filter=@tinybase-tester/astro dev",
+		"format": "biome format --write",
+		"lint": "biome lint --write",
+		"check": "biome check"
+	},
 	"devDependencies": {
 		"biome": "^0.3.3"
 	}

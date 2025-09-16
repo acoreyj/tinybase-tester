@@ -1,93 +1,78 @@
 import { TINYBASE_SERVER } from "astro:env/client";
-import {
-	getStoreManager,
-	type StoreManager,
-	type StoreManagerConfig,
-} from "@tinybase-tester/shared/client";
-import { useEffect, useRef, useState } from "react";
-import type {
-	TablesSchema,
-	TablesSchemaWithOptions,
-} from "@tinybase-tester/shared";
-import * as UiReact from "tinybase/ui-react/with-schemas";
-import { type NoValuesSchema } from "tinybase/with-schemas";
 
-export interface TinybaseProps<Schema extends TablesSchema> {
-	synch?: boolean;
-	schema: TablesSchemaWithOptions;
-	tinybaseSchema: Schema;
-	children?: (storeManager: StoreManager<Schema>) => React.ReactNode;
+import {
+	createLocalPersister,
+	type LocalPersister,
+} from "tinybase/persisters/persister-browser";
+import { createMergeableStore, type MergeableStore } from "tinybase";
+import {
+	createWsSynchronizer,
+	type WsSynchronizer,
+} from "tinybase/synchronizers/synchronizer-ws-client";
+import ReconnectingWebSocket from "reconnecting-websocket";
+import { useState, useEffect } from "react";
+
+export interface TinybaseProps {
+	name: string;
 }
 
-export function useTinybase<Schema extends TablesSchema>(
-	config: Omit<TinybaseProps<Schema>, "children">,
-	name?: string,
-) {
-	const [storeManager, setStoreManager] = useState<StoreManager<Schema> | null>(
-		null,
-	);
+const websocketMap = new Map<string, ReconnectingWebSocket>();
+
+export function useTinybase(config: TinybaseProps, name?: string) {
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
-	const storeManagerRef = useRef<StoreManager<Schema> | null>(null);
-
+	const [store, setStore] = useState<MergeableStore | null>(null);
+	const [synchronizer, setSynchronizer] =
+		useState<WsSynchronizer<ReconnectingWebSocket> | null>(null);
+	const [persister, setPersister] = useState<LocalPersister | null>(null);
 	useEffect(() => {
 		const initializeStoreManager = async () => {
 			try {
 				setIsLoading(true);
 				setError(null);
+				const store = createMergeableStore(config.name);
+				const persister = createLocalPersister(store, config.name);
+				await persister.startAutoLoad();
+				await persister.startAutoSave();
+				const ws =
+					websocketMap.get(TINYBASE_SERVER) ||
+					new ReconnectingWebSocket(`${TINYBASE_SERVER}/tinybase`);
 
-				// Create store manager configuration
-				const managerConfig: StoreManagerConfig<Schema> = {
-					schema: config.schema,
-					tinybaseSchema: config.tinybaseSchema,
-					tinybaseServerUrl: TINYBASE_SERVER,
-					synch: config.synch ?? true,
-					getToken: async () => {
-						return null;
-					},
-					getUser: async () => {
-						return null;
-					},
-				};
-
-				// Create store manager instance
-				const manager = await getStoreManager(managerConfig, name);
-				setStoreManager(manager);
-				storeManagerRef.current = manager;
+				websocketMap.set(TINYBASE_SERVER, ws);
+				const synchronizer = await createWsSynchronizer(store, ws);
+				await synchronizer.startSync();
+				setStore(store);
+				setSynchronizer(synchronizer);
+				setPersister(persister);
 			} catch (err) {
-				console.error("Failed to initialize Tinybase store manager:", err);
+				console.error("Failed to initialize Tinybase store:", err);
 				setError(err instanceof Error ? err.message : "Unknown error occurred");
 			} finally {
 				setIsLoading(false);
 			}
 		};
 
-		if (!storeManager || storeManager.name !== name || !storeManager.isActive) {
+		if (!store) {
 			initializeStoreManager();
 		}
 
 		// Cleanup function
 		return () => {
-			if (storeManager) {
-				storeManager.destroy();
+			if (store) {
+				persister?.stopAutoPersisting();
+				synchronizer?.stopSync();
 			}
 		};
-	}, [config.synch, config.schema, config.tinybaseSchema, storeManager, name]);
+	}, [
+		store,
+		config.name,
+		persister?.stopAutoPersisting,
+		synchronizer?.stopSync,
+	]);
 
 	return {
-		storeManager,
+		store,
 		isLoading,
 		error,
-		isActive: storeManager?.isActive ?? false,
 	};
 }
-export const useTinybaseReact = <Schema extends TablesSchema>(
-	tablesSchema: Schema,
-) => {
-	// Cast the whole module to be schema-based with WithSchemas:
-	const UiReactWithSchemas = UiReact as UiReact.WithSchemas<
-		[typeof tablesSchema, NoValuesSchema]
-	>;
-	// Deconstruct to access the hooks and components you need:
-	return UiReactWithSchemas;
-};

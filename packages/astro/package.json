@@ -19,7 +19,6 @@
 		"react-dom": "^19.1.1",
 		"reconnecting-websocket": "^4.4.0",
 		"tailwindcss": "^4.1.13",
-		"tinybase": "link:/home/corey/workspace/tinybase/dist",
-		"@tinybase-tester/shared": "workspace:*"
+		"tinybase": "^6.6.0"
 	}
 }

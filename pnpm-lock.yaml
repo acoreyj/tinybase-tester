@@ -73,7 +73,7 @@ importers:
         version: 1.3.11(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       drizzle-orm:
         specifier: ^0.44.4
-        version: 0.44.5(@cloudflare/workers-types@4.20250913.0)(kysely@0.28.7)
+        version: 0.44.5(@cloudflare/workers-types@4.20250913.0)(@opentelemetry/api@1.9.0)(kysely@0.28.7)
       mimetext:
         specifier: ^3.0.27
         version: 3.0.27
@@ -96,6 +96,12 @@ importers:
 
   packages/tinybase-server:
     dependencies:
+      '@sentry/cloudflare':
+        specifier: ^10.12.0
+        version: 10.12.0(@cloudflare/workers-types@4.20250913.0)
+      hono:
+        specifier: ^4.9.7
+        version: 4.9.7
       tinybase:
         specifier: ^6.6.0
         version: 6.6.0(@cloudflare/workers-types@4.20250913.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
@@ -1050,6 +1056,10 @@ packages:
       arctic: ^2.2.2
       hono: ^4.0.0
 
+  '@opentelemetry/api@1.9.0':
+    resolution: {integrity: sha512-3giAOQvZiH5F9bMlMiv8+GSPMeqg0dbaeo58/0SlA9sxSqZhnUtxzX9/2FzyhS9sWQf5S0GJE0AKBrFqjpeYcg==}
+    engines: {node: '>=8.0.0'}
+
   '@oslojs/asn1@1.0.0':
     resolution: {integrity: sha512-zw/wn0sj0j0QKbIXfIlnEcTviaCzYOY3V5rAyjR6YtOByFtJiT574+8p9Wlach0lZH9fddD4yb9laEAIl4vXQA==}
 
@@ -1229,6 +1239,19 @@ packages:
     resolution: {integrity: sha512-APwKy6YUhvZaEoHyM+9xqmTpviEI+9eL7LoCH+aLcvWYHJ663qG5zx7WzWZY+a9qkg5JtzcMyJ9z0WtQBMDmgA==}
     cpu: [x64]
     os: [win32]
+
+  '@sentry/cloudflare@10.12.0':
+    resolution: {integrity: sha512-At1eX7eUUzCza8jhcyHvdC3mlLwF03lEhT4rfWA8B+MO7R5e9wNOBiCOLpxXq0XkfYOYHNw+q9tRwAvK7xt29w==}
+    engines: {node: '>=18'}
+    peerDependencies:
+      '@cloudflare/workers-types': ^4.x
+    peerDependenciesMeta:
+      '@cloudflare/workers-types':
+        optional: true
+
+  '@sentry/core@10.12.0':
+    resolution: {integrity: sha512-Jrf0Yo7DvmI/ZQcvBnA0xKNAFkJlVC/fMlvcin+5IrFNRcqOToZ2vtF+XqTgjRZymXQNE8s1QTD7IomPHk0TAw==}
+    engines: {node: '>=18'}
 
   '@shikijs/core@3.12.2':
     resolution: {integrity: sha512-L1Safnhra3tX/oJK5kYHaWmLEBJi1irASwewzY3taX5ibyXyMkkSDZlq01qigjryOBwrXSdFgTiZ3ryzSNeu7Q==}
@@ -4212,6 +4235,8 @@ snapshots:
       hono: 4.9.7
       jose: 5.9.6
 
+  '@opentelemetry/api@1.9.0': {}
+
   '@oslojs/asn1@1.0.0':
     dependencies:
       '@oslojs/binary': 1.0.0
@@ -4411,6 +4436,15 @@ snapshots:
 
   '@rollup/rollup-win32-x64-msvc@4.50.2':
     optional: true
+
+  '@sentry/cloudflare@10.12.0(@cloudflare/workers-types@4.20250913.0)':
+    dependencies:
+      '@opentelemetry/api': 1.9.0
+      '@sentry/core': 10.12.0
+    optionalDependencies:
+      '@cloudflare/workers-types': 4.20250913.0
+
+  '@sentry/core@10.12.0': {}
 
   '@shikijs/core@3.12.2':
     dependencies:
@@ -5097,9 +5131,10 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.44.5(@cloudflare/workers-types@4.20250913.0)(kysely@0.28.7):
+  drizzle-orm@0.44.5(@cloudflare/workers-types@4.20250913.0)(@opentelemetry/api@1.9.0)(kysely@0.28.7):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20250913.0
+      '@opentelemetry/api': 1.9.0
       kysely: 0.28.7
 
   dset@3.1.4: {}

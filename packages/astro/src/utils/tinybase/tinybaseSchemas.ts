@@ -3,7 +3,7 @@ import { createSchema, datetime, number, text } from "@tinybase-tester/shared";
 type UserRole = "admin" | "user" | "guest";
 
 export const getUserSchema = (userId = "guest") => {
-	return createSchema(`g-user-st-${userId}`, {
+	return createSchema(`g-user-tbl-${userId}`, {
 		id: text().required(),
 		username: text(),
 		createdAt: datetime().defaultServerFunction("now", ["insert"]).readonly(),

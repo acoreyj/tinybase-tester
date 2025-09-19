@@ -83,10 +83,10 @@ export class StoreManager<Schema extends TablesSchema> {
 	public ready: Promise<void>;
 	public tinybaseSchema: Schema;
 
-	constructor(config: StoreManagerConfig<Schema>, name?: string) {
+	constructor(config: StoreManagerConfig<Schema>, name = "genie") {
 		this.config = config;
-		this.name = name || Object.keys(config.schema.schema)[0];
 		this.tinybaseSchema = config.tinybaseSchema;
+		this.name = name;
 		this.store = createMergeableStore(this.name).setTablesSchema(
 			config.tinybaseSchema,
 		);
@@ -105,7 +105,7 @@ export class StoreManager<Schema extends TablesSchema> {
 		if (this.config.synch) {
 			//if not user instance, then get user instance
 			let app = "";
-			if (!this.name.startsWith("g-user-st-")) {
+			if (!this.name.startsWith("g-user-tbl-")) {
 				const userInstance = getUserInstance();
 				if (userInstance) {
 					app = userInstance.getStore().getValue("app") as string;
@@ -320,7 +320,7 @@ export const getStoreManager = async <Schema extends TablesSchema>(
 
 export const getUserInstance = () => {
 	const userInstanceKey = Array.from(instanceMap.keys()).reduce((acc, key) => {
-		if (key.startsWith("g-user-st-")) {
+		if (key.startsWith("g-user-tbl-")) {
 			acc.push(key);
 		}
 		return acc;

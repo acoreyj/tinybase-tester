@@ -18,6 +18,6 @@
 	"dependencies": {
 		"@sentry/cloudflare": "^10.12.0",
 		"hono": "^4.9.7",
-		"tinybase": "^6.6.0"
+		"tinybase": "link:/home/corey/workspace/tinybase/dist"
 	}
 }

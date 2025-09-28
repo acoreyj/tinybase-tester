@@ -1,6 +1,6 @@
 // src/durable.ts
 
-import type { MergeableStore } from "tinybase";
+import type { Id, MergeableStore } from "tinybase";
 import { createMergeableStore } from "tinybase/mergeable-store";
 import { createDurableObjectSqlStoragePersister } from "tinybase/persisters/persister-durable-object-sql-storage";
 import { WsServerDurableObject } from "tinybase/synchronizers/synchronizer-ws-server-durable-object";
@@ -59,4 +59,123 @@ export class StateStore extends WsServerDurableObject {
 
 		return persister;
 	}
+
+	onFetch(request: Request, pathId: Id, clientId: Id): void {
+		console.log("onFetch", { request, pathId, clientId });
+	}
+
+	async onMessageMutator(fromClientId: Id, toClientId: Id, remainder: string): Promise<boolean> {
+		console.log("onMessageMutator", { fromClientId, toClientId, remainder });
+		return true;
+	}
+}
+
+function createErrorMessage(
+	fromClientId: Id,
+	error: string,
+	remainder: string,
+	type: number = -1,
+) {
+	const remainderData = JSON.parse(remainder);
+	remainderData[1] = type;
+	remainderData[2] = {
+		data: {
+			error,
+		},
+	};
+	return `${fromClientId}\n${JSON.stringify(remainderData)}`;
+}
+
+type TableDiffs = Record<
+	string,
+	Array<{
+		[rowId: string]: Array<{
+			[field: string]: [value: string | number | boolean, timestamp: string];
+		}>;
+	}>
+>[];
+function getTableDiffs(data: unknown[], store: MergeableStore) {
+	const diffsResult: {
+		table: string;
+		rowId: string;
+		field: string;
+		value: string | number | boolean;
+		timestamp: string;
+		update: boolean;
+	}[] = [];
+	const diffs = data[0] as unknown | TableDiffs;
+	if (!diffs || typeof diffs !== "object" || !Array.isArray(diffs)) {
+		return diffsResult;
+	}
+	for (const diff of diffs as TableDiffs) {
+		if (typeof diff !== "object" || !Object.keys(diff).length) {
+			continue;
+		}
+		for (const table of Object.keys(diff)) {
+			const tableData = diff[table];
+			if (typeof tableData !== "object" || !Array.isArray(tableData)) {
+				continue;
+			}
+			for (const tableRow of tableData) {
+				if (typeof tableRow !== "object" || !Object.keys(tableRow).length) {
+					continue;
+				}
+				for (const rowId of Object.keys(tableRow)) {
+					const rowData = tableRow[rowId];
+					if (typeof rowData !== "object" || !Array.isArray(rowData)) {
+						continue;
+					}
+					for (const row of rowData) {
+						if (typeof row !== "object" || !Object.keys(row).length) {
+							continue;
+						}
+						for (const field of Object.keys(row)) {
+							const value = row[field];
+							diffsResult.push({
+								table,
+								rowId,
+								field,
+								value: value[0],
+								timestamp: value[1],
+								update: store.hasRow(table, rowId),
+							});
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return diffsResult;
+}
+type ValuesDiffs = Array<{
+	[field: string]: [value: string | number | boolean, timestamp: string];
+}>;
+function getValuesDiffs(data: unknown[], store: MergeableStore) {
+	const diffsResult: {
+		field: string;
+		value: string | number | boolean;
+		timestamp: string;
+		update: boolean;
+	}[] = [];
+	const diffs = data[1] as unknown | ValuesDiffs;
+	if (!diffs || typeof diffs !== "object" || !Array.isArray(diffs)) {
+		return diffsResult;
+	}
+	for (const diff of diffs as ValuesDiffs) {
+		if (typeof diff !== "object" || !Object.keys(diff).length) {
+			continue;
+		}
+		for (const field of Object.keys(diff)) {
+			const value = diff[field];
+			diffsResult.push({
+				field,
+				value: value[0],
+				timestamp: value[1],
+				update: store.hasValue(field),
+			});
+		}
+	}
+
+	return diffsResult;
 }

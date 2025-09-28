@@ -103,8 +103,8 @@ importers:
         specifier: ^4.9.7
         version: 4.9.7
       tinybase:
-        specifier: ^6.6.0
-        version: 6.6.0(@cloudflare/workers-types@4.20250913.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: link:/home/corey/workspace/tinybase/dist
+        version: link:../../../tinybase/dist
     devDependencies:
       '@cloudflare/vitest-pool-workers':
         specifier: ^0.8.19
@@ -3016,74 +3016,6 @@ packages:
 
   tiny-inflate@1.0.3:
     resolution: {integrity: sha512-pkY1fj1cKHb2seWDy0B16HeWyczlJA9/WW3u3c4z/NiWDsO3DOU5D7nhTLE9CF0yXv/QZFY7sEJmj24dK+Rrqw==}
-
-  tinybase@6.6.0:
-    resolution: {integrity: sha512-v5qrdURUdyBnDXLfwZxN4Ewr3prJM9eN0c5ar6+FwOjWJ+KAbs7KRNKg641r1Ucp2ojbfXkju08YAvnQZ3yoAA==}
-    peerDependencies:
-      '@automerge/automerge-repo': ^1.2.1
-      '@cloudflare/workers-types': ^4.20250828.0
-      '@electric-sql/pglite': ^0.2.17
-      '@libsql/client': ^0.15.14
-      '@powersync/common': ^1.36.0
-      '@sqlite.org/sqlite-wasm': ^3.50.4-build1
-      '@vlcn.io/crsqlite-wasm': ^0.16.0
-      bun: ^1.2.21
-      electric-sql: ^0.12.1
-      expo: ^53.0.9
-      expo-sqlite: ^15.2.14
-      partykit: ^0.0.115
-      partysocket: ^1.1.5
-      postgres: ^3.4.7
-      react: ^19.0.0
-      react-dom: ^19.0.0
-      react-native-mmkv: 3.3.0
-      react-native-sqlite-storage: ^6.0.1
-      sqlite3: ^5.1.7
-      ws: ^8.18.3
-      yjs: ^13.6.27
-    peerDependenciesMeta:
-      '@automerge/automerge-repo':
-        optional: true
-      '@cloudflare/workers-types':
-        optional: true
-      '@electric-sql/pglite':
-        optional: true
-      '@libsql/client':
-        optional: true
-      '@powersync/common':
-        optional: true
-      '@sqlite.org/sqlite-wasm':
-        optional: true
-      '@vlcn.io/crsqlite-wasm':
-        optional: true
-      bun:
-        optional: true
-      electric-sql:
-        optional: true
-      expo:
-        optional: true
-      expo-sqlite:
-        optional: true
-      partykit:
-        optional: true
-      partysocket:
-        optional: true
-      postgres:
-        optional: true
-      react:
-        optional: true
-      react-dom:
-        optional: true
-      react-native-mmkv:
-        optional: true
-      react-native-sqlite-storage:
-        optional: true
-      sqlite3:
-        optional: true
-      ws:
-        optional: true
-      yjs:
-        optional: true
 
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
@@ -6579,12 +6511,6 @@ snapshots:
   through@2.3.8: {}
 
   tiny-inflate@1.0.3: {}
-
-  tinybase@6.6.0(@cloudflare/workers-types@4.20250913.0)(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
-    optionalDependencies:
-      '@cloudflare/workers-types': 4.20250913.0
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
 
   tinybench@2.9.0: {}
 

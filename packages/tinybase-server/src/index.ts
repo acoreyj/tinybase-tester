@@ -79,3 +79,5 @@ const getPathId = (request: HonoRequest): Id => {
 	const pathId = pathname.match(PATH_REGEX)?.[1] ?? "";
 	return pathId;
 };
+
+export { StateStore };

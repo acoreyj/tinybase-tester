@@ -2,10 +2,15 @@ import type { Cell, CellOrUndefined } from "tinybase";
 import type { TablesSchema, MetaType, Relation } from "./types";
 import { serverFunctions } from "./serverFunctions";
 
-export type SchemaBuilderBase<
-	T extends Cell,
-	RT extends "string" | "number" | "boolean",
-> = {
+// Authorization types
+export type AuthOperation = "create" | "read" | "update" | "delete";
+
+export type AuthorizationConfig = Partial<Record<AuthOperation, string>>;
+
+export type TableAuthorizationConfig = Partial<Record<AuthOperation, string>>;
+
+export type RuntimeType = "string" | "number" | "boolean";
+export type SchemaBuilderBase<T extends Cell, RT extends RuntimeType> = {
 	default: <D extends CellOrUndefined>(
 		value: D | (() => D),
 	) => SchemaBuilderBase<T, RT> & { defaultValue: D } & { runtimeType: RT };
@@ -20,6 +25,9 @@ export type SchemaBuilderBase<
 	references: (field: TablesSchema[string]) => SchemaBuilderBase<T, RT> & {
 		runtimeType: RT;
 	};
+	authorize: (
+		config: AuthorizationConfig,
+	) => SchemaBuilderBase<T, RT> & { runtimeType: RT };
 	schemaType: T;
 	defaultValue?: CellOrUndefined;
 	defaultValueFn?: {
@@ -34,6 +42,7 @@ export type SchemaBuilderBase<
 	_required?: boolean;
 	metatype?: MetaType;
 	_references?: TablesSchema[string];
+	_authorization?: AuthorizationConfig;
 };
 
 // Type for remote row ID getter function
@@ -89,6 +98,10 @@ const createBuilder = <
 			builder._references = field;
 			return builder;
 		},
+		authorize: (config: AuthorizationConfig) => {
+			builder._authorization = config;
+			return builder;
+		},
 		schemaType: "any" as T,
 		_type: undefined as unknown as T,
 		runtimeType: runtimeType as RT, // Preserve the literal type
@@ -105,6 +118,7 @@ const createBuilder = <
 		_readonly: undefined as boolean | undefined,
 		_required: undefined as boolean | undefined,
 		_references: undefined as TablesSchema[string] | undefined,
+		_authorization: undefined as AuthorizationConfig | undefined,
 	};
 
 	return builder as SchemaBuilderBase<T, RT> & { runtimeType: RT };
@@ -152,16 +166,45 @@ type ExtractDefaultValue<T> = T extends { defaultValue: infer D }
  */
 export type InferTinybaseSchema<
 	TTableName extends string,
-	T extends Record<string, SchemaBuilderBase<any, any>>,
+	T extends Record<string, SchemaBuilderBase<Cell, RuntimeType>>,
 > = {
 	readonly [TableName in TTableName]: {
 		readonly [K in keyof T]: ExtractDefaultValue<T[K]> extends undefined
 			? { readonly type: ExtractRuntimeType<T[K]> }
 			: {
 					readonly type: ExtractRuntimeType<T[K]>;
-					readonly default: ExtractDefaultValue<T[K]>;
+					readonly default?: ExtractDefaultValue<T[K]>;
 				};
 	};
+};
+
+/**
+ * The return type of the createSchema function.
+ * Use this type to annotate variables that store schema definitions.
+ */
+export type SchemaDefinition<
+	TableName extends string = string,
+	T extends Record<string, SchemaBuilderBase<Cell, RuntimeType>> = Record<
+		string,
+		SchemaBuilderBase<Cell, RuntimeType>
+	>,
+> = {
+	/** The rich internal schema definition. */
+	schema: {
+		schema: TablesSchema;
+		displayTemplate: string;
+		tableAuthorization?: TableAuthorizationConfig;
+	};
+	/** The simplified schema compatible with TinyBase's createStore().setSchema(). */
+	tinybaseSchema: InferTinybaseSchema<TableName, T>;
+	/** The display template for UI components. */
+	displayTemplate: string;
+	/** A phantom property for inferring the row's selection model type. */
+	$inferSelect: InferSelectModel<T>;
+	/** A phantom property for inferring the readonly TinyBase schema type. */
+	$tinybaseSchemaType: InferTinybaseSchema<TableName, T>;
+	/** Table-level authorization configuration. */
+	tableAuthorization?: TableAuthorizationConfig;
 };
 
 // ✨ 1. ALTER THIS FUNCTION
@@ -171,7 +214,12 @@ export type InferTinybaseSchema<
 export function createSchema<
 	TableName extends string,
 	T extends Record<string, SchemaBuilderBase<any, any>>,
->(tableName: TableName, schema: T, displayTemplate?: string) {
+>(
+	tableName: TableName,
+	schema: T,
+	displayTemplate?: string,
+	tableAuthorization?: TableAuthorizationConfig,
+): SchemaDefinition<TableName, T> {
 	const richRowSchema: TablesSchema[string] = {};
 	// Use Record type to allow indexing while preserving inference
 	const tinybaseRowSchema = {} as Record<string, any>;
@@ -188,6 +236,7 @@ export function createSchema<
 			hidden: builder._hidden,
 			required: builder._required,
 			references: builder._references,
+			authorization: builder._authorization,
 		};
 
 		richRowSchema[columnId] = {
@@ -238,6 +287,7 @@ export function createSchema<
 		schema: {
 			schema: finalRichSchema,
 			displayTemplate: displayTemplate || `{{${firstKey}}}`,
+			tableAuthorization,
 		},
 		/** The simplified schema compatible with TinyBase's createStore().setSchema(). */
 		tinybaseSchema: finalTinybaseSchema as InferTinybaseSchema<TableName, T>,
@@ -247,6 +297,8 @@ export function createSchema<
 		$inferSelect: null as unknown as InferSelectModel<T>,
 		/** A phantom property for inferring the readonly TinyBase schema type. */
 		$tinybaseSchemaType: null as unknown as InferTinybaseSchema<TableName, T>,
+		/** Table-level authorization configuration. */
+		tableAuthorization,
 	};
 }
 

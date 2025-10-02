@@ -1,94 +1,71 @@
-import { testSchema, tableSchema } from "@/utils/tinybase/tinybaseSchemas";
-import { useTinybase, useTinybaseReact } from "../hooks/useTinybase";
 import mockdata from "@/utils/mockdata.json";
-import { useMemo } from "react";
-import {
-	useAddRowCallback,
-	useDelTableCallback,
-	useTable,
-} from "tinybase/ui-react";
+import { useDelTableCallback, useStore, useTable } from "tinybase/ui-react";
 
 export default function TinybaseTable({ name }: { name: string }) {
-	const { storeManager, isLoading } = useTinybase({
-		schema: testSchema.schema,
-		tinybaseSchema: testSchema.tinybaseSchema,
-		synch: true,
-	});
+	const store = useStore();
 
-	const { storeManager: storeManager2, isLoading: isLoading2 } = useTinybase({
-		schema: tableSchema.schema,
-		tinybaseSchema: tableSchema.tinybaseSchema,
-		synch: true,
-	});
-	const store = storeManager?.getStore();
-	const store2 = storeManager2?.getStore();
-
-	const handleClick = () => {
+	const add1000RowsToTable = () => {
 		for (const item of mockdata) {
-			store?.addRow("test", item);
-		}
-		for (const item of mockdata) {
-			store2?.addRow("table", item);
+			store?.addRow(name, item);
 		}
 	};
 
-	const add300Rows = () => {
+	const add300RowsToTable = () => {
 		for (const item of mockdata.slice(0, 300)) {
-			store?.addRow("test", item);
-		}
-		for (const item of mockdata.slice(0, 300)) {
-			store2?.addRow("table", item);
+			store?.addRow(name, item);
 		}
 	};
-
-	const addRow = () => {
+	const addRowToTable = () => {
 		const index = Math.floor(Math.random() * 1000);
-		store?.addRow("test", mockdata[index]);
-		store2?.addRow("table", mockdata[index]);
+		store?.addRow(name, mockdata[index]);
 	};
 
-	const clearStore = useDelTableCallback("test", store as any, () =>
-		console.log("Cleared store"),
+	const clearTable = useDelTableCallback(name, store as any, () =>
+		console.log("Cleared store table"),
 	);
-	const clearStore2 = useDelTableCallback("table", store2 as any, () =>
-		console.log("Cleared store2"),
-	);
+
 	return (
 		<div className="flex flex-col gap-4">
-			<button
-				className="bg-blue-500 text-white p-2 rounded-md"
-				id="span"
-				onClick={handleClick}
-				type="button"
-			>
-				Add 1000 Rows
-			</button>
-			<button
-				className="bg-blue-500 text-white p-2 rounded-md"
-				id="span"
-				onClick={add300Rows}
-				type="button"
-			>
-				Add 300 Rows
-			</button>
-			<button
-				className="bg-red-500 text-white p-2 rounded-md"
-				id="span"
-				onClick={clearStore}
-				type="button"
-			>
-				Clear Store
-			</button>
-			<button
-				className="bg-blue-500 text-white p-2 rounded-md"
-				id="span"
-				onClick={clearStore2}
-				type="button"
-			>
-				Clear Store2
-			</button>
-			<div>{JSON.stringify(useTable("test", store as any))}</div>
-			<div>{JSON.stringify(useTable("table", store2 as any))}</div>
+			<div className="flex  gap-4">
+				<button
+					className="cursor-pointer bg-blue-500 text-white p-2 rounded-md"
+					id="span"
+					onClick={addRowToTable}
+					type="button"
+				>
+					Add Row
+				</button>
+				<button
+					className="cursor-pointer bg-yellow-500 text-white p-2 rounded-md"
+					id="span"
+					onClick={add300RowsToTable}
+					type="button"
+				>
+					Add 300 Rows
+				</button>
+
+				<button
+					className="cursor-pointer bg-orange-500 text-white p-2 rounded-md"
+					id="span"
+					onClick={add1000RowsToTable}
+					type="button"
+				>
+					Add 1000 Rows
+				</button>
+			</div>
+			<div>
+				<button
+					className="cursor-pointer bg-red-500 text-white p-2 rounded-md"
+					id="span"
+					onClick={clearTable}
+					type="button"
+				>
+					Clear Table
+				</button>
+			</div>
+
+			<h2 className="text-2xl font-bold">{name}</h2>
+			<div>{JSON.stringify(useTable(name, store))}</div>
 		</div>
 	);
 }

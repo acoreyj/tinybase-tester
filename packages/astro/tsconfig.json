@@ -1,6 +1,10 @@
 {
 	"extends": "astro/tsconfigs/strict",
-	"include": [".astro/types.d.ts", "**/*"],
+	"include": [
+		".astro/types.d.ts",
+		"**/*",
+		"src/utils/tinybase/tinybaseSchemas.ts"
+	],
 	"exclude": ["dist"],
 	"compilerOptions": {
 		"baseUrl": ".",

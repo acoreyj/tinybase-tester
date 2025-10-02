@@ -19,6 +19,7 @@
 	"dependencies": {
 		"@sentry/cloudflare": "^10.12.0",
 		"hono": "^4.9.7",
-		"tinybase": "link:/home/corey/workspace/tinybase/dist"
+		"tinybase": "link:/home/corey/workspace/tinybase/dist",
+		"@tinybase-tester/shared": "workspace:*"
 	}
 }

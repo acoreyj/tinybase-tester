@@ -3,38 +3,72 @@ import { createSchema, datetime, number, text } from "@tinybase-tester/shared";
 type UserRole = "admin" | "user" | "guest";
 
 export const getUserSchema = (userId = "guest") => {
-	return createSchema(`g-user-tbl-${userId}`, {
+	return createSchema(
+		`g-user-tbl-${userId}`,
+		{
+			id: text().required(),
+			username: text().authorize({ update: "isAdmin" }),
+			createdAt: datetime().defaultServerFunction("now", ["insert"]).readonly(),
+			updatedAt: datetime()
+				.defaultServerFunction("now", ["insert", "update"])
+				.readonly(),
+			watching: text(),
+		},
+		undefined,
+		{
+			delete: "isAdmin",
+		},
+	);
+};
+
+export const productSchema = createSchema(
+	"product",
+	{
 		id: text().required(),
-		username: text(),
+		name: text().required().authorize({ update: "isAdmin" }),
+		description: text().authorize({ create: "isAdmin", update: "isAdmin" }),
+		imageSet: text().authorize({
+			create: "isAdmin",
+			update: "isAdmin",
+			delete: "isAdmin",
+		}),
 		createdAt: datetime().defaultServerFunction("now", ["insert"]).readonly(),
 		updatedAt: datetime()
 			.defaultServerFunction("now", ["insert", "update"])
 			.readonly(),
-		watching: text(),
-	});
-};
-
-export const productSchema = createSchema("product", {
-	id: text().required(),
-	name: text().required(),
-	description: text(),
-	imageSet: text(),
-	createdAt: datetime().defaultServerFunction("now", ["insert"]).readonly(),
-	updatedAt: datetime()
-		.defaultServerFunction("now", ["insert", "update"])
-		.readonly(),
-});
-export const testSchema = createSchema("test", {
-	id: number().required(),
-	first_name: text().required(),
-	last_name: text().required(),
-	email: text().required(),
-	gender: text().required(),
-	ip_address: text().required(),
-	username: text().required(),
-	height: number().required(),
-	weight: number().required(),
-});
+	},
+	undefined,
+	{
+		create: "isAdmin",
+		delete: "isAdmin",
+	},
+);
+export const testSchema = createSchema(
+	"test",
+	{
+		id: number().required(),
+		first_name: text().required(),
+		last_name: text().required(),
+		email: text().required(),
+		gender: text().required(),
+		ip_address: text().required(),
+		username: text().required().authorize({ read: "public" }),
+		height: number().required(),
+		weight: number().required(),
+		weight2: number().required(),
+		createdAt: datetime().defaultServerFunction("now", ["insert"]).readonly(),
+		updatedAt: datetime()
+			.defaultServerFunction("now", ["insert", "update"])
+			.readonly(),
+	},
+	undefined,
+	{
+		read: "isOwner",
+		update: "isOwner",
+		create: "isAdmin",
+		delete: "isAdmin",
+	},
+);
 
 export const tableSchema = createSchema("table", {
 	id: number().required(),
@@ -46,6 +80,12 @@ export const tableSchema = createSchema("table", {
 	username: text().required(),
 	height: number().required(),
 	weight: number().required(),
+	createdAt: datetime()
+		.defaultServerFunction("now", ["insert", "update"])
+		.readonly(),
+	updatedAt: datetime()
+		.defaultServerFunction("now", ["insert", "update"])
+		.readonly(),
 });
 
 const usersSchema = getUserSchema();

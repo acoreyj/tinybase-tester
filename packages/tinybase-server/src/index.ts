@@ -1,6 +1,7 @@
-import { Hono, HonoRequest } from "hono";
+import { Hono } from "hono";
+import type { HonoRequest } from "hono";
 import { createMiddleware } from "hono/factory";
-import { Id } from "tinybase/common";
+import type { Id } from "tinybase/common";
 import * as Sentry from "@sentry/cloudflare";
 import { StateStore } from "./statestore";
 
@@ -49,8 +50,8 @@ const durableObjectMiddleware = createMiddleware(async (c, next) => {
 		return new Response("Upgrade required", { status: 426 });
 	}
 
-	const id = c.env.StateStore.idFromName(getPathId(request));
-	const stub = c.env.StateStore.get(id);
+	const id = c.env.STATE_STORE.idFromName(getPathId(request));
+	const stub = c.env.STATE_STORE.get(id);
 	c.set("stub", stub);
 	await next();
 });

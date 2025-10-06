@@ -7,7 +7,6 @@ import { StateStore } from "./statestore";
 
 const app = new Hono();
 
-
 export default Sentry.withSentry(
 	(env: Env) => {
 		const versionId = env.CF_VERSION_METADATA?.id ?? "unknown";
@@ -45,7 +44,10 @@ export default Sentry.withSentry(
 const durableObjectMiddleware = createMiddleware(async (c, next) => {
 	const request = c.req;
 	const clientId = getClientId(request);
-	const isApiRequest = request.url.includes("__api__");
+	const isApiRequest =
+		request.url.includes("__api__") ||
+		request.url.includes("values-list") ||
+		request.url.includes("tables-list");
 	if (!clientId && !isApiRequest) {
 		return new Response("Upgrade required", { status: 426 });
 	}

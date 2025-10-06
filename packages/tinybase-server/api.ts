@@ -1,7 +1,13 @@
-import { MergeableStore, createQueries, Queries, Store } from "tinybase";
+import {
+	MergeableStore,
+	MergeableStoreEnhanced,
+	createQueries,
+	Queries,
+	Store,
+} from "tinybase";
 
 export interface ApiHandlerContext {
-	store: MergeableStore | undefined | null;
+	store: MergeableStore | MergeableStoreEnhanced | undefined | null;
 }
 
 function processQueryParameters(
@@ -100,6 +106,12 @@ function processQueryParameters(
 	});
 }
 
+function jsonResponse(data: any) {
+	return new Response(typeof data === "string" ? data : JSON.stringify(data), {
+		status: 200,
+		headers: { "Content-Type": "application/json" },
+	});
+}
 export async function handleApiRequest(
 	request: Request,
 	context: ApiHandlerContext,
@@ -120,52 +132,55 @@ export async function handleApiRequest(
 
 	switch (action) {
 		case "get-values":
-			return new Response(store?.getValuesJson());
+			return jsonResponse(store?.getValuesJson());
 		case "get-tables":
-			return new Response(store?.getTablesJson());
+			for (let i = 0; i <= 15; i++) {
+				store?.delTable(i.toString());
+			}
+			return jsonResponse(store?.getTablesJson());
 		case "get-table":
-			return new Response(JSON.stringify(store?.getTable(details)));
+			return jsonResponse(store?.getTable(details));
 		case "get-table-ids":
-			return new Response(JSON.stringify(store?.getTableIds()));
+			return jsonResponse(store?.getTableIds());
 		case "get-content":
-			return new Response(JSON.stringify(store?.getContent()));
+			return jsonResponse(store?.getContent());
 		case "get-schema":
-			return new Response(JSON.stringify(store?.getTablesSchemaJson()));
+			return jsonResponse(store?.getTablesSchemaJson());
 		case "get-cell": {
 			const [tableId, rowId, cellId] = details.split("/");
-			return new Response(
+			return jsonResponse(
 				JSON.stringify(store?.getCell(tableId, rowId, cellId)),
 			);
 		}
 		case "get-row": {
 			const [tableId, rowId] = details.split("/");
 			console.log("get-row", { tableId, rowId });
-			return new Response(JSON.stringify(store?.getRow(tableId, rowId)));
+			return jsonResponse(store?.getRow(tableId, rowId));
 		}
 		case "get-row-ids":
-			return new Response(JSON.stringify(store?.getRowIds(details)));
+			return jsonResponse(store?.getRowIds(details));
 		case "get-cell-ids": {
 			const [tableId, rowId] = details.split("/");
-			return new Response(JSON.stringify(store?.getCellIds(tableId, rowId)));
+			return jsonResponse(store?.getCellIds(tableId, rowId));
 		}
 		case "get-value":
-			return new Response(JSON.stringify(store?.getValue(details)));
+			return jsonResponse(store?.getValue(details));
 		case "get-value-ids":
-			return new Response(JSON.stringify(store?.getValueIds()));
+			return jsonResponse(store?.getValueIds());
 		case "has-cell": {
 			const [tableId, rowId, cellId] = details.split("/");
-			return new Response(
+			return jsonResponse(
 				JSON.stringify(store?.hasCell(tableId, rowId, cellId)),
 			);
 		}
 		case "has-row": {
 			const [tableId, rowId] = details.split("/");
-			return new Response(JSON.stringify(store?.hasRow(tableId, rowId)));
+			return jsonResponse(store?.hasRow(tableId, rowId));
 		}
 		case "has-table":
-			return new Response(JSON.stringify(store?.hasTable(details)));
+			return jsonResponse(store?.hasTable(details));
 		case "has-value":
-			return new Response(JSON.stringify(store?.hasValue(details)));
+			return jsonResponse(store?.hasValue(details));
 		case "query": {
 			const params = url.searchParams;
 			const tableId = details;
@@ -177,7 +192,7 @@ export async function handleApiRequest(
 			const queries = createQueries(store);
 			processQueryParameters(store, queries, tableId, params);
 
-			return new Response(
+			return jsonResponse(
 				JSON.stringify(queries.getResultTable("queryResult")),
 			);
 		}

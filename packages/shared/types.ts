@@ -9,13 +9,14 @@ export type MetaType =
 	| "email"
 	| "file"
 	| "image";
-type CellSchemaBase = {
+export type CellSchemaBase = {
 	id?: string;
 	metatype?: MetaType;
 	readonly?: boolean;
 	hidden?: boolean;
 	required?: boolean;
 	references?: TablesSchema[string];
+	authorization?: AuthorizationConfig;
 };
 export type CellSchema =
 	| (CellSchemaBase & {
@@ -46,3 +47,10 @@ export type Relation = {
 	relatedType: "many" | "one";
 	relationKey: string;
 };
+
+// Authorization types
+export type AuthOperation = "create" | "read" | "update" | "delete";
+
+export type AuthorizationConfig = Partial<Record<AuthOperation, string>>;
+
+export type TableAuthorizationConfig = Partial<Record<AuthOperation, string>>;

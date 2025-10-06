@@ -8,6 +8,10 @@ export default function Tinybase() {
 
 	if (isLoading) {
 		return <div>Loading...</div>;
+	} else {
+		if (typeof document !== "undefined") {
+			window["store"] = store;
+		}
 	}
 
 	return (

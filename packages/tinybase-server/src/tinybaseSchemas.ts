@@ -52,7 +52,7 @@ export const testSchema = createSchema(
 		email: text().required(),
 		gender: text().required(),
 		ip_address: text().required(),
-		username: text().required().authorize({ read: "public" }),
+		username: text().required().authorize({ read: "allowAll" }),
 		height: number().required(),
 		weight: number().required(),
 		weight2: number().required(),
@@ -63,14 +63,14 @@ export const testSchema = createSchema(
 	},
 	undefined,
 	{
-		read: "isOwner",
-		update: "isOwner",
-		create: "isAdmin",
-		delete: "isAdmin",
+		read: "allowAll",
+		update: "allowAll",
+		create: "allowAll",
+		delete: "allowAll",
 	},
 );
 
-export const tableSchema = createSchema("table", {
+const tableSchemaSchema = {
 	id: number().required(),
 	first_name: text().required(),
 	last_name: text().required(),
@@ -86,18 +86,74 @@ export const tableSchema = createSchema("table", {
 	updatedAt: datetime()
 		.defaultServerFunction("now", ["insert", "update"])
 		.readonly(),
+} as const;
+export const tableSchema = createSchema("table", tableSchemaSchema, undefined, {
+	read: "allowAll",
+	update: "allowAll",
+	create: "allowAll",
+	delete: "allowAll",
 });
 
+const anotherTableSchema = createSchema(
+	"anotherTable",
+	tableSchemaSchema,
+	undefined,
+	{
+		update: "allowAll",
+		create: "allowAll",
+		delete: "allowAll",
+	},
+);
 const usersSchema = getUserSchema();
 const tinybaseUsersSchema = usersSchema.tinybaseSchema;
 const tinybaseProductSchema = productSchema.tinybaseSchema;
-
+export const genieSchema = createSchema(
+	"genieSchema",
+	{
+		schema: text().required(),
+	},
+	undefined,
+	{
+		create: "isAdmin",
+		delete: "isAdmin",
+		update: "isAdmin",
+		read: "allowAll",
+	},
+);
 export const schemas = {
 	users: usersSchema,
 	product: productSchema,
 	test: testSchema,
 	table: tableSchema,
+	anotherTable: anotherTableSchema,
+	genieSchema: genieSchema,
 };
+type AuthContext = {
+	type: "create" | "read" | "update" | "delete";
+	user?: unknown;
+	value?: unknown;
+};
+export const authorizationFunctions: Record<
+	string,
+	(context: AuthContext) => boolean
+> = {
+	isAdmin: (context: AuthContext) => {
+		return true;
+	},
+	isAuthenticated: (context: AuthContext) => {
+		return true;
+	},
+	isOwner: (context: AuthContext) => {
+		return true;
+	},
+	hasRole: (context: AuthContext) => {
+		return true;
+	},
+	allowAll: (context: AuthContext) => {
+		return true;
+	},
+};
+
 // const tester = createSchema("tester", {
 // 	id: text(),
 // 	name: text(),

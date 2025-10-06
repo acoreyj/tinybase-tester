@@ -1,13 +1,13 @@
-import type { Cell, CellOrUndefined } from "tinybase";
-import type { TablesSchema, MetaType, Relation } from "./types";
+import type { Cell, CellOrUndefined, CellSchema } from "tinybase";
+import type {
+	TablesSchema,
+	MetaType,
+	Relation,
+	AuthorizationConfig,
+	TableAuthorizationConfig,
+	CellSchemaBase,
+} from "./types";
 import { serverFunctions } from "./serverFunctions";
-
-// Authorization types
-export type AuthOperation = "create" | "read" | "update" | "delete";
-
-export type AuthorizationConfig = Partial<Record<AuthOperation, string>>;
-
-export type TableAuthorizationConfig = Partial<Record<AuthOperation, string>>;
 
 export type RuntimeType = "string" | "number" | "boolean";
 export type SchemaBuilderBase<T extends Cell, RT extends RuntimeType> = {
@@ -229,7 +229,7 @@ export function createSchema<
 		const columnId = builder.id || key;
 
 		// 1. Build the rich internal schema definition
-		const base = {
+		const base: CellSchemaBase = {
 			metatype: builder.metatype,
 			id: builder.id,
 			readonly: builder._readonly,
@@ -239,12 +239,13 @@ export function createSchema<
 			authorization: builder._authorization,
 		};
 
+		//@ts-expect-error - we are using the runtimeType to set the type
 		richRowSchema[columnId] = {
-			type: builder.runtimeType,
+			type: builder.runtimeType as CellSchema["type"],
 			default: builder.defaultValue,
 			defaultServerFunction: builder.defaultValueFn,
 			...base,
-		} as any; // Using any to bypass type checking for now
+		};
 
 		// 2. Build the simplified TinyBase schema definition
 		// Construct the object directly to preserve literal types

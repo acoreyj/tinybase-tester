@@ -1,7 +1,13 @@
 import mockdata from "@/utils/mockdata.json";
 import { useDelTableCallback, useStore, useTable } from "tinybase/ui-react";
 
-export default function TinybaseTable({ name }: { name: string }) {
+export default function TinybaseTable({
+	name,
+	basic = false,
+}: {
+	name: string;
+	basic?: boolean;
+}) {
 	const store = useStore();
 
 	const add1000RowsToTable = () => {
@@ -20,17 +26,25 @@ export default function TinybaseTable({ name }: { name: string }) {
 		store?.addRow(name, mockdata[index]);
 	};
 
+	const addRowToTableBasic = () => {
+		const index = Math.floor(Math.random() * 1000);
+		const data = mockdata[index];
+		store?.addRow(name, { id: data.id, first_name: data.first_name });
+	};
+
 	const clearTable = useDelTableCallback(name, store as any, () =>
 		console.log("Cleared store table"),
 	);
 
+	const table = useTable(name, store);
+	const data = Object.values(table);
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex flex-col gap-4 border-2 border-gray-300 p-4 rounded-md my-4">
 			<div className="flex  gap-4">
 				<button
 					className="cursor-pointer bg-blue-500 text-white p-2 rounded-md"
 					id="span"
-					onClick={addRowToTable}
+					onClick={basic ? addRowToTableBasic : addRowToTable}
 					type="button"
 				>
 					Add Row
@@ -65,7 +79,11 @@ export default function TinybaseTable({ name }: { name: string }) {
 			</div>
 
 			<h2 className="text-2xl font-bold">{name}</h2>
-			<div>{JSON.stringify(useTable(name, store))}</div>
+			<div className="flex flex-col gap-2">
+				{data.map((row) => (
+					<div key={row.id?.toString()}>{JSON.stringify(row)}</div>
+				))}
+			</div>
 		</div>
 	);
 }

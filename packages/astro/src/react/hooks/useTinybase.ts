@@ -36,7 +36,7 @@ export function useTinybase(config: TinybaseProps, name?: string) {
 				await persister.startAutoSave();
 				const ws =
 					websocketMap.get(TINYBASE_SERVER) ||
-					new ReconnectingWebSocket(`${TINYBASE_SERVER}/tinybase`);
+					new ReconnectingWebSocket(`${TINYBASE_SERVER}/genie`);
 
 				websocketMap.set(TINYBASE_SERVER, ws);
 				const synchronizer = await createWsSynchronizer(store, ws);

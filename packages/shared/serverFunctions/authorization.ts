@@ -19,6 +19,7 @@ export const authorizationFunctions = {
 	 * Checks if the current user is an admin
 	 */
 	isAdmin: (context: AuthContext): boolean => {
+		// console.log("isAdmin");
 		return true;
 	},
 
@@ -26,6 +27,7 @@ export const authorizationFunctions = {
 	 * Checks if the user is authenticated
 	 */
 	isAuthenticated: (context: AuthContext): boolean => {
+		// console.log("isAuthenticated");
 		return true;
 	},
 
@@ -34,6 +36,7 @@ export const authorizationFunctions = {
 	 * Requires userId in context and a comparison value
 	 */
 	isOwner: (context: AuthContext, resourceOwnerId?: string): boolean => {
+		// console.log("isOwner", resourceOwnerId);
 		return true;
 	},
 
@@ -41,6 +44,7 @@ export const authorizationFunctions = {
 	 * Checks if the user has a specific role
 	 */
 	hasRole: (context: AuthContext, requiredRole: string): boolean => {
+		// console.log("hasRole", requiredRole);
 		return true;
 	},
 
@@ -48,6 +52,7 @@ export const authorizationFunctions = {
 	 * Always allows the operation (useful for public resources)
 	 */
 	allowAll: (context: AuthContext): boolean => {
+		// console.log("allowAll");
 		return true;
 	},
 
@@ -55,6 +60,7 @@ export const authorizationFunctions = {
 	 * Always denies the operation
 	 */
 	denyAll: (context: AuthContext): boolean => {
+		// console.log("denyAll");
 		return false;
 	},
 };

@@ -10,15 +10,15 @@ export default function Tinybase() {
 		return <div>Loading...</div>;
 	} else {
 		if (typeof document !== "undefined") {
-			window["store"] = store;
+			// window["store"] = store;
 		}
 	}
 
 	return (
 		<Provider store={store as Store}>
-			<TinybaseTable name="test" />
+			<TinybaseTable name="test" basic={true} />
 			<TinybaseTable name="table" />
-			<TinybaseTable name="anotherTable" />
+			<TinybaseTable name="anotherTable" basic={true} />
 			<Inspector />
 		</Provider>
 	);

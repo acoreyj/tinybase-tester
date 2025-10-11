@@ -1,9 +1,14 @@
 // src/durable.ts
 
-import type { Id, MergeableStoreEnhanced, MergeableStore } from "tinybase";
-import { createMergeableStoreEnhanced } from "tinybase/mergeable-store-enhanced";
+import {
+	type Id,
+	type MergeableStoreEnhanced,
+	type MergeableStore,
+	createMergeableStore,
+	AuthContext,
+} from "tinybase";
 import { createDurableObjectSqlStoragePersister } from "tinybase/persisters/persister-durable-object-sql-storage";
-import { WsServerDurableObject } from "tinybase/synchronizers/synchronizer-ws-server-durable-object";
+import { WsServerDurableObjectEnhanced } from "tinybase/synchronizers/synchronizer-ws-server-durable-object-enhanced";
 import { handleApiRequest } from "../api";
 import {
 	type SchemaDefinition,
@@ -20,13 +25,36 @@ import { authorizationFunctions, schemas } from "./tinybaseSchemas";
 //   GetCellDiff = 6,
 //   GetValueDiff = 7,
 // }
-export class StateStore extends WsServerDurableObject {
+const defaultLogger: (
+	level: string,
+	message: string,
+	context: unknown,
+) => void = (level, message, context) => {
+	const prefix = `[WsServerDurableObjectEnhanced] ${message}`;
+	const args = context === undefined ? [prefix] : [prefix, context];
+	if (level === "error") {
+		console.error(...args);
+		return;
+	}
+	if (level === "warn") {
+		console.warn(...args);
+		return;
+	}
+	if (level === "info") {
+		console.log(...args);
+		return;
+	}
+	console.log(...args);
+};
+export class StateStore extends WsServerDurableObjectEnhanced {
 	state: DurableObjectState;
-	store: MergeableStoreEnhanced | null = null; // Store will be initialized in the constructor
 
 	constructor(state: DurableObjectState, env: Env) {
 		super(state, env);
 		this.state = state;
+		this.setLogger(defaultLogger);
+		this.setExpandedSchema(schemas);
+		this.setServerFunctions(serverFunctions);
 	}
 
 	async fetch(request: Request) {
@@ -64,20 +92,30 @@ export class StateStore extends WsServerDurableObject {
 		return superResponse;
 	}
 
+	getAuthContext(): AuthContext {
+		return {
+			isAuthenticated: true,
+			userId: "1",
+			userEmail: "test@test.com",
+			role: "admin",
+		};
+	}
 	createPersister() {
-		this.store =
-			this.store ??
-			createMergeableStoreEnhanced(
-				undefined,
-				schemas,
-				serverFunctions,
-				async () => ({
-					isAuthenticated: true,
-					userId: "1",
-					userEmail: "test@test.com",
-				}),
-				console.log,
-			);
+		this.store = this.store ?? createMergeableStore();
+		// this.store =
+		// 	this.store ??
+		// 	createMergeableStoreEnhanced(
+		// 		undefined,
+		// 		schemas,
+		// 		serverFunctions,
+		// 		() => ({
+		// 			isAuthenticated: true,
+		// 			userId: "1",
+		// 			userEmail: "test@test.com",
+		// 			role: "admin",
+		// 		}),
+		// 		// console.log,
+		// 	);
 
 		const persister = createDurableObjectSqlStoragePersister(
 			this.store as unknown as MergeableStore,
@@ -115,10 +153,6 @@ export class StateStore extends WsServerDurableObject {
 		return persister;
 	}
 
-	// onFetch(request: Request, pathId: Id, clientId: Id): void {
-	// 	console.log("onFetch", { request, pathId, clientId });
-	// }
-
 	getSchemaForTable(table: string): SchemaDefinition["schema"] | null {
 		const currentSchema = this.store?.getCell("genieSchema", table, "schema");
 		try {
@@ -128,116 +162,75 @@ export class StateStore extends WsServerDurableObject {
 		}
 	}
 
-	async onMessageMutator(
-		fromClientId: Id,
-		toClientId: Id,
-		remainder: string,
-	): Promise<boolean | string> {
-		const remainderArray = JSON.parse(remainder) as [
-			string,
-			number,
-			Array<unknown>,
-		];
-		const isWrite =
-			toClientId === "S" || (toClientId === "" && fromClientId !== "S");
-		try {
-			const isRead = fromClientId === "S";
-			const [messageId, type, data] = remainderArray;
-			// console.log("onMessageMutator", {
-			// 	fromClientId,
-			// 	toClientId,
-			// 	messageId,
-			// 	type,
-			// 	data: JSON.stringify(data, null, 2),
-			// 	isRead,
-			// 	tables: this.store?.getTableIds(),
-			// });
-			if (!this.store) {
-				console.error("Store is not initialized");
-				return false;
-			}
-			const diffs = getTableDiffs(remainderArray, this.store);
-			// console.log("diffs", diffs);
-
-			const tables = new Set(diffs?.map((diff) => diff.table));
-			// console.log("tables", tables);
-			for (const table of Array.from(tables)) {
-				console.log("table", table);
-				const schema = this.getSchemaForTable(table);
-				if (!schema?.schema) {
-					continue;
-				}
-				if (isWrite) {
-					processDefaultServerFunctions(diffs, table, schema, this.store);
-				}
-			}
-		} catch (error) {
-			console.error("Error onMessageMutator", error);
-			return false;
-		}
-		return true;
-	}
+	// async onMessageMutator(
+	// 	fromClientId: Id,
+	// 	toClientId: Id,
+	// 	remainder: string,
+	// 	isWrite: boolean,
+	// ): Promise<boolean | string> {
+	// 	const superResponse = await super.onMessageMutator(
+	// 		fromClientId,
+	// 		toClientId,
+	// 		remainder,
+	// 		isWrite,
+	// 	);
+	// 	if (superResponse === false) {
+	// 		return false;
+	// 	} else if (typeof superResponse === "string") {
+	// 		remainder = superResponse;
+	// 	}
+	// 	const remainderArray = JSON.parse(remainder) as [
+	// 		string,
+	// 		number,
+	// 		Array<unknown>,
+	// 	];
+	// 	const [messageId, type, data] = remainderArray;
+	// 	// console.log("onMessageMutator", {
+	// 	// fromClientId,
+	// 	// toClientId,
+	// 	// type,
+	// 	// messageId,
+	// 	// isWrite,
+	// 	// data: JSON.stringify(data, null, 2),
+	// 	// });
+	// 	try {
+	// 		if (!this.store) {
+	// 			console.error("Store is not initialized");
+	// 			return false;
+	// 		}
+	// 		if (isWrite) {
+	// 			const diffs = getTableDiffs(remainderArray, this.store);
+	// 			const tables = new Set(diffs?.map((diff) => diff.table));
+	// 			for (const table of Array.from(tables)) {
+	// 				const schema = this.getSchemaForTable(table);
+	// 				if (!schema?.schema) {
+	// 					continue;
+	// 				}
+	// 				processDefaultServerFunctions(diffs, table, schema, this.store);
+	// 			}
+	// 		}
+	// 	} catch (error) {
+	// 		console.error("Error onMessageMutator", error);
+	// 		return false;
+	// 	}
+	// 	return true;
+	// }
 }
-function isAuthorized(
-	diffs: DiffResult[],
-	table: string,
-	schema: SchemaDefinition["schema"],
-	store: MergeableStoreEnhanced,
-	isRead: boolean,
-) {
-	const tableDiffs = diffs.filter((diff) => diff.table === table);
-	const fieldsUpdated = tableDiffs.map((diff) => diff.field);
-	const tableSchema = schema.schema[table];
-	if (isRead) {
-		const readTablePermissions = schema.tableAuthorization?.read;
-		if (readTablePermissions) {
-			const authorized = authorizationFunctions[
-				readTablePermissions as keyof typeof authorizationFunctions
-			]({
-				type: "read",
-				value: diffs,
-			});
-			if (!authorized) {
-				console.log("table deny");
-				return false;
-			}
-		}
-		for (const diff of tableDiffs) {
-			for (const fieldKey of Object.keys(tableSchema)) {
-				const fieldSchema = tableSchema[fieldKey];
-				if (fieldSchema?.authorization?.read) {
-					const authorized = authorizationFunctions[
-						fieldSchema.authorization
-							.read as keyof typeof authorizationFunctions
-					]({
-						type: "read",
-						value: diff.value,
-					});
-					if (!authorized) {
-						console.log("field deny");
-						return false;
-					}
-				} else if (!readTablePermissions) {
-					console.log("default deny");
-					// default deny
-					return false;
-				}
-			}
-		}
-	}
-	return true;
-}
-
 function processDefaultServerFunctions(
 	diffs: DiffResult[],
 	table: string,
 	schema: SchemaDefinition["schema"],
-	store: MergeableStoreEnhanced,
+	store: MergeableStoreEnhanced | MergeableStore,
 ) {
 	const tableDiffs = diffs.filter((diff) => diff.table === table);
 	const fieldsUpdated = tableDiffs.map((diff) => diff.field);
 	const tableSchema = schema.schema[table];
+	const processedRows = new Set();
 	for (const diff of tableDiffs) {
+		if (processedRows.has(diff.rowId)) {
+			continue;
+		}
+		processedRows.add(diff.rowId);
 		for (const fieldKey of Object.keys(tableSchema)) {
 			const fieldSchema = tableSchema[fieldKey];
 			if (
@@ -259,6 +252,7 @@ function processDefaultServerFunctions(
 						fieldSchema.defaultServerFunction.updateType.includes("insert"));
 				if (defaultValueFn && doSetCell) {
 					const defaultValue = defaultValueFn();
+
 					store?.setCell(diff.table, diff.rowId, fieldKey, defaultValue);
 				}
 			}
@@ -316,7 +310,7 @@ type DiffResult = {
  */
 function getTableDiffs(
 	data: unknown[],
-	store: MergeableStoreEnhanced,
+	store: MergeableStoreEnhanced | MergeableStore,
 ): DiffResult[] {
 	// Basic validation for the common data structure envelope
 
@@ -353,7 +347,10 @@ function getTableDiffs(
  * @param store The store to check for existing rows.
  * @returns An array of processed diffs.
  */
-function processUpdateDiff(data: TableDiffs[], store: MergeableStoreEnhanced) {
+function processUpdateDiff(
+	data: TableDiffs[],
+	store: MergeableStoreEnhanced | MergeableStore,
+) {
 	const diffsResult: DiffResult[] = [];
 
 	for (const diffs of data) {
@@ -375,7 +372,7 @@ function processUpdateDiff(data: TableDiffs[], store: MergeableStoreEnhanced) {
  */
 function processSetDiff(
 	diffs: SetDiff[],
-	store: MergeableStoreEnhanced,
+	store: MergeableStoreEnhanced | MergeableStore,
 ): DiffResult[] {
 	const diffsResult: DiffResult[] = [];
 
@@ -426,7 +423,10 @@ function processSetDiff(
 type ValuesDiffs = Array<{
 	[field: string]: [value: string | number | boolean, timestamp: string];
 }>;
-function getValuesDiffs(data: unknown[], store: MergeableStoreEnhanced) {
+function getValuesDiffs(
+	data: unknown[],
+	store: MergeableStoreEnhanced | MergeableStore,
+) {
 	const diffsResult: {
 		field: string;
 		value: string | number | boolean;

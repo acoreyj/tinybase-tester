@@ -99,6 +99,7 @@ const anotherTableSchema = createSchema(
 	tableSchemaSchema,
 	undefined,
 	{
+		read: "denyAll",
 		update: "allowAll",
 		create: "allowAll",
 		delete: "allowAll",

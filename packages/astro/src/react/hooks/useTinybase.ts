@@ -19,6 +19,7 @@ export interface TinybaseProps {
 const websocketMap = new Map<string, ReconnectingWebSocket>();
 
 export function useTinybase(config: TinybaseProps, name?: string) {
+	const [schemas, setSchemas] = useState<SchemaDefinition[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 	const [store, setStore] = useState<MergeableStore | null>(null);
@@ -69,6 +70,7 @@ export function useTinybase(config: TinybaseProps, name?: string) {
 		persister?.stopAutoPersisting,
 		synchronizer?.stopSync,
 	]);
+	
 
 	return {
 		store,

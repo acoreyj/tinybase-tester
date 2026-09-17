@@ -90,7 +90,7 @@ const tableSchemaSchema = {
 export const tableSchema = createSchema("table", tableSchemaSchema, undefined, {
 	read: "allowAll",
 	update: "allowAll",
-	create: "allowAll",
+	create: "denyAll",
 	delete: "allowAll",
 });
 
